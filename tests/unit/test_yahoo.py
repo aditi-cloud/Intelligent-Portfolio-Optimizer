@@ -57,5 +57,15 @@ def test_timeout_wrapped(data_request):
 def test_currency_not_inferred_from_symbol(price_dataset, data_request):
     provider = YahooPriceProvider(download=Mock(return_value=pd.concat({"Close": price_dataset.prices}, axis=1)),
                                   currency_lookup=Mock(return_value=None))
-    with pytest.raises(ProviderError, match="currencies"):
+    with pytest.raises(ProviderError, match="currency metadata"):
         provider.fetch_prices(data_request)
+
+
+def test_default_currency_lookup_uses_history_metadata(monkeypatch):
+    ticker = Mock()
+    ticker.get_history_metadata.return_value = {"currency": "INR"}
+    factory = Mock(return_value=ticker)
+    monkeypatch.setattr("yfinance.Ticker", factory)
+    provider = YahooPriceProvider()
+    assert provider._currency_lookup("TCS.NS") == "INR"
+    ticker.get_info.assert_not_called()

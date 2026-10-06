@@ -44,7 +44,9 @@ class YahooPriceProvider:
         import yfinance as yf
         self.version = version or yf.__version__
         self._download = download or yf.download
-        self._currency_lookup = currency_lookup or (lambda ticker: yf.Ticker(ticker).get_info().get("currency"))
+        self._currency_lookup = currency_lookup or (
+            lambda ticker: yf.Ticker(ticker).get_history_metadata().get("currency")
+        )
         self._clock = clock or (lambda: datetime.now(timezone.utc))
 
     def fetch_prices(self, request: PortfolioRequest) -> PriceDataset:
@@ -59,6 +61,13 @@ class YahooPriceProvider:
             )
             prices = adjusted_close_frame(raw, request.tickers)
             currencies = {ticker: self._currency_lookup(ticker) for ticker in request.tickers}
+            missing = [ticker for ticker, currency in currencies.items() if not currency]
+            if missing:
+                raise ProviderError(
+                    "Yahoo did not provide currency metadata for " + ", ".join(missing)
+                    + ". Yahoo may be restricting requests from this server; "
+                    "try again later or use Demo (synthetic)."
+                )
             dataset = PriceDataset(prices, currencies, self.name, self._clock(), self.adjustment_policy)
             canonical = validate_prices(dataset, request)
             return PriceDataset(canonical, currencies, self.name, dataset.retrieved_at, self.adjustment_policy)
