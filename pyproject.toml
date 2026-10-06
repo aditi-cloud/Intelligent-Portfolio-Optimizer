@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "intelligent-portfolio-optimizer"
+version = "0.1.0"
+description = "Testable portfolio analysis with a Streamlit presentation layer"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.optional-dependencies]
+dev = ["pytest>=8,<9"]
+data = ["numpy>=1.26,<3", "pandas>=2.2,<4", "yfinance>=0.2.54,<2"]
+analysis = ["numpy>=1.26,<3", "pandas>=2.2,<4", "scikit-learn>=1.4,<2"]
+optimization = ["numpy>=1.26,<3", "pandas>=2.2,<4", "cvxpy>=1.6,<2"]
+core = ["numpy", "pandas", "scikit-learn", "cvxpy", "yfinance"]
+ui = ["streamlit>=1.53,<2", "plotly>=6,<8"]
+ml = ["xgboost", "lightgbm", "arch"]
+lstm = ["tensorflow"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+addopts = "-ra"
+markers = ["live: requires external market data", "integration: tests multiple components", "ui: Streamlit app acceptance tests"]
